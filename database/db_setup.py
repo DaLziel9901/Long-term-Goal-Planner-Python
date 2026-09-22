@@ -1,10 +1,12 @@
 import sqlite3
 
-def create_database():
+def create_database(connection = None):
     try:
-        conn = sqlite3.connect("planner.db")
+        if connection is None:
+            conn = sqlite3.connect("planner.db")
+        else:
+            conn = connection
         cursor = conn.cursor()
-
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS Task (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,4 +30,3 @@ def create_database():
     if conn:
         conn.commit()
         conn.close()
-

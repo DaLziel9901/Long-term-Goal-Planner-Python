@@ -1,4 +1,5 @@
-from db_setup import get_connection
+import sqlite3
+from get_connection import get_connection
 from get_task_by_id import get_task_by_id
 
 def insert_task(parent_id, root_id, level, title, description, start_date, end_date, is_done, is_random, order_index):
