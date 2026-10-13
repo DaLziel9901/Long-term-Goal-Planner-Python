@@ -1,4 +1,4 @@
-from get_connection import get_connection
+from database.get_connection import get_connection
 
 def get_children(parent_id):
     connection = get_connection()

@@ -1,5 +1,5 @@
-from get_connection import get_connection
-from get_children import get_children
+from database.get_connection import get_connection
+from database.get_children import get_children
 
 def calc_progress(task_id):
     connection = get_connection()

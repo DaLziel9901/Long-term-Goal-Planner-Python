@@ -1,30 +1,31 @@
-from get_connection import get_connection
+from contextlib import closing
+from database.get_connection import get_connection
 
 
 def delete_task(task_id):
-    connection = get_connection()
-    cursor = connection.cursor()
+    with closing(get_connection()) as connection:
+        with connection:
+            cursor = connection.cursor()
+            cursor.execute("SELECT id FROM Task WHERE id = ?", (task_id,))
+            if cursor.fetchone() is None:
+                return 0
 
-    def delete_recursive(id):
+            def delete_recursive(current_id):
+                cursor.execute(
+                    "SELECT id FROM Task WHERE parent_id = ?",
+                    (current_id,)
+                )
+                children = cursor.fetchall()
 
-        cursor.execute(
-            "SELECT id FROM Task WHERE parent_id = ?",
-            (id,)
-        )
+                # Xóa các con trước khi xóa cha.
+                deleted_count = 0
+                for child in children:
+                    deleted_count += delete_recursive(child["id"])
 
-        children = cursor.fetchall()
+                cursor.execute(
+                    "DELETE FROM Task WHERE id = ?",
+                    (current_id,)
+                )
+                return deleted_count + cursor.rowcount
 
-
-        for child in children:
-            delete_recursive(child["id"])
-
-
-        cursor.execute(
-            "DELETE FROM Task WHERE id = ?",
-            (id,)
-        )
-
-    delete_recursive(task_id)
-
-    connection.commit()
-    connection.close()
+            return delete_recursive(task_id)

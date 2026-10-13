@@ -1,9 +1,10 @@
 import sqlite3
+from database.get_connection import get_connection
 
 def create_database(connection = None):
     try:
         if connection is None:
-            conn = sqlite3.connect("planner.db")
+            conn = get_connection()
         else:
             conn = connection
         cursor = conn.cursor()
