@@ -23,7 +23,7 @@ def build_interface():
     state.title1.pack(side='left', padx=(28, 38), pady=20)
     state.button1 = widgets.make_button(state.taskbar, 'Kế hoạch', actions.show_frame1)
     state.button2 = widgets.make_button(state.taskbar, 'Thống kê', actions.show_frame2)
-    state.button3 = widgets.make_button(state.taskbar, 'Lịch tuần', actions.show_frame3)
+    state.button3 = widgets.make_button(state.taskbar, 'Lịch mục tiêu', actions.show_frame3)
     for button in (state.button1, state.button2, state.button3):
         button.pack(side='left', padx=4, pady=12)
         button.bind('<Enter>', lambda event, b=button: b.configure(bg=LIGHT_BLUE))
@@ -71,7 +71,7 @@ def build_interface():
     state.contentbar.pack(side='left', fill='both', expand=True)
     sidebar_heading = tk.Frame(state.project_frame, bg=WHITE)
     sidebar_heading.pack(fill='x', padx=18, pady=(22, 8))
-    state.title2 = widgets.make_label(sidebar_heading, 'Dự án', 13, TEXT, True)
+    state.title2 = widgets.make_label(sidebar_heading, 'Mục tiêu', 13, TEXT, True)
     state.title2.pack(side='left')
     state.project_count = tk.StringVar(state.window, '0')
     widgets.make_label(sidebar_heading,
@@ -82,16 +82,16 @@ def build_interface():
         padx=8,
         pady=2).pack(side='right')
     widgets.make_label(state.project_frame,
-        'Danh sách dự án',
+        'Danh sách mục tiêu',
         9,
         MUTED).pack(anchor='w',
         padx=18,
         pady=(0, 14))
     footer = tk.Frame(state.project_frame, bg=WHITE)
     footer.pack(side='bottom', fill='x', padx=16, pady=16)
-    state.button_add = widgets.make_button(footer, '+ Thêm dự án', actions.show_project, primary=True)
+    state.button_add = widgets.make_button(footer, '+ Thêm mục tiêu', actions.show_project, primary=True)
     state.button_add.pack(fill='x')
-    state.button_delete = widgets.make_button(footer, 'Xóa dự án', actions.xoa_du_an_dang_chon)
+    state.button_delete = widgets.make_button(footer, 'Xóa mục tiêu', actions.xoa_du_an_dang_chon)
     state.button_delete.configure(fg='#A6524C', activeforeground='#A6524C', pady=7)
     state.button_delete.bind('<Enter>', lambda event: state.button_delete.configure(bg='#FAEEEE'))
     state.button_delete.bind('<Leave>', lambda event: state.button_delete.configure(bg=WHITE))

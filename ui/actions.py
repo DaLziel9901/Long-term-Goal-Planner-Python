@@ -13,8 +13,8 @@ from ui.widgets import (BLUE, LIGHT_BLUE, MUTED, WHITE)
 
 def show_empty_project():
     state.selected_project_id = None
-    state.content_title.set('Chưa có dự án')
-    state.content_description.set('Thêm một dự án ở bên trái để bắt đầu.')
+    state.content_title.set('Chưa có mục tiêu')
+    state.content_description.set('Thêm một mục tiêu ở bên trái hoặc trong Lịch mục tiêu để bắt đầu.')
     state.start_text.set('Chưa đặt ngày')
     state.end_text.set('Chưa đặt ngày')
     state.project_badge.set('')
@@ -41,7 +41,7 @@ def show_sample(exam):
         return True
     state.selected_project_id = project['id']
     state.content_title.set(project['name'])
-    state.content_description.set(project['description'] or 'Dự án này chưa có mô tả.')
+    state.content_description.set(project['description'] or 'Mục này chưa có mô tả.')
     state.start_text.set(data.display_date(project['start_date']))
     state.end_text.set(data.display_date(project['end_date']))
     cap_nhat_cong_viec(tasks)
@@ -171,9 +171,9 @@ def set_active_frame(frame, active_button):
     for button in (state.button1, state.button2, state.button3):
         selected = button is active_button
         button.configure(bg=LIGHT_BLUE if selected else WHITE, fg=BLUE if selected else MUTED)
-    headings = {state.button1: ('Kế hoạch', 'Dự án và công việc của bạn'),
+    headings = {state.button1: ('Kế hoạch', 'Mục tiêu và công việc của bạn'),
         state.button2: ('Thống kê', 'Tiến độ và trạng thái công việc'),
-        state.button3: ('Lịch tuần', 'Sắp xếp theo ngày dự kiến thực hiện')}
+        state.button3: ('Lịch mục tiêu', 'Thời gian, tiến độ và những việc cần làm')}
     state.page_title.set(headings[active_button][0])
     state.page_subtitle.set(headings[active_button][1])
 

@@ -48,10 +48,22 @@ title2 = None
 under_frame_1 = None
 under_frame_2 = None
 under_frame_3 = None
-week_board = None
-week_card_limit = None
-week_columns = None
 week_start = None
-week_tasks_by_day = None
 week_title = None
 window = None
+
+# Lịch mục tiêu: dữ liệu, lựa chọn và các Canvas được cuộn đồng bộ.
+calendar_tasks = []
+calendar_rows = []
+calendar_collapsed = set()
+calendar_selected_task = None
+calendar_mode = None
+calendar_include_done = None
+calendar_selection_text = None
+calendar_canvas = None
+calendar_names = None
+calendar_header = None
+calendar_start = None
+calendar_end = None
+calendar_days = 0
+calendar_width = 0

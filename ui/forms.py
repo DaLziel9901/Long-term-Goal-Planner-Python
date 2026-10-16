@@ -20,7 +20,7 @@ def open_add_project():
     dialog = tk.Toplevel(state.window)
     state.add_dialog = dialog
     dialog.withdraw()
-    dialog.title('Thêm dự án mới')
+    dialog.title('Thêm mục tiêu mới')
     dialog.configure(bg=WHITE)
     dialog.resizable(False, False)
     dialog.transient(state.window)
@@ -34,10 +34,10 @@ def open_add_project():
     dialog.bind('<Escape>', close_dialog)
     header = tk.Frame(dialog, bg=LIGHT_BLUE, padx=28, pady=20)
     header.pack(fill='x')
-    widgets.make_label(header, 'Thêm dự án', 19, TEXT, True, LIGHT_BLUE).pack(anchor='w')
+    widgets.make_label(header, 'Thêm mục tiêu', 19, TEXT, True, LIGHT_BLUE).pack(anchor='w')
     form = tk.Frame(dialog, bg=WHITE, padx=28, pady=20)
     form.pack(fill='both', expand=True)
-    widgets.make_label(form, 'Tên dự án *', bold=True).pack(anchor='w', pady=(0, 7))
+    widgets.make_label(form, 'Tên mục tiêu *', bold=True).pack(anchor='w', pady=(0, 7))
     name_entry = ttk.Entry(form, style='Form.TEntry')
     name_entry.pack(fill='x')
     widgets.make_label(form, 'Mô tả', bold=True).pack(anchor='w', pady=(18, 7))
@@ -95,14 +95,15 @@ def open_add_project():
             messagebox.showerror('Chưa lưu được dự án', data.database_error_message(error), parent=dialog)
             return 'break'
         close_dialog()
-        if actions.refresh_project_list(select_id=project_id):
-            state.status_text.set('Đã thêm dự án.')
+        state.calendar_selected_task = project_id
+        if actions.lam_moi_du_lieu(project_id):
+            state.status_text.set('Đã thêm mục tiêu.')
         else:
             state.status_text.set('Đã lưu dự án, chưa tải lại được danh sách.')
         return 'break'
     footer = tk.Frame(dialog, bg=SOFT, padx=28, pady=16)
     footer.pack(fill='x')
-    save_button = widgets.make_button(footer, 'Lưu dự án', save_project, primary=True)
+    save_button = widgets.make_button(footer, 'Lưu mục tiêu', save_project, primary=True)
     save_button.pack(side='right')
     widgets.make_button(footer, 'Hủy', close_dialog).pack(side='right', padx=(0, 10))
     name_entry.bind('<Return>', save_project)
@@ -140,6 +141,11 @@ def mo_form_cong_viec(task_id=None, project_id=None, planned_date=None):
         if task:
             projects = [data.get_project(task['parent_id'])] if task['parent_id'] is not None else [task]
         parent = data.get_project(project_id) if project_id is not None else None
+        if project_id is not None and parent is None:
+            messagebox.showwarning('Không tìm thấy mục tiêu cha',
+                'Mục tiêu cha không còn tồn tại. Hãy tải lại lịch trước khi thêm công việc.',
+                parent=state.window)
+            return None
         if parent is not None and all((project['id'] != parent['id'] for project in projects)):
             projects.append(parent)
         has_children = bool(get_children(task_id)) if task else False
@@ -269,10 +275,15 @@ def mo_form_cong_viec(task_id=None, project_id=None, planned_date=None):
         if state.active_nav_button is state.button3 and start_entry.get().strip():
             state.selected_day = datetime.strptime(start_entry.get().strip(), '%d/%m/%Y').date()
             state.week_start = state.selected_day - timedelta(days=state.selected_day.weekday())
+        if state.active_nav_button is state.button3:
+            state.calendar_selected_task = saved_id
         # Chỉ tải lại các trang khi hàm database đã lưu thành công.
         dong_form()
         if actions.lam_moi_du_lieu(task_id if task else chosen_project):
             state.status_text.set('Đã lưu công việc.')
+            if state.active_nav_button is state.button3:
+                from ui import weekly_calendar
+                weekly_calendar.chon_ngay(state.selected_day)
         else:
             state.status_text.set('Đã lưu công việc, chưa tải lại được đầy đủ dữ liệu.')
         for tree in (state.task_list, state.day_task_list):
