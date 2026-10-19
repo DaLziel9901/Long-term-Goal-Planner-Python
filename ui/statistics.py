@@ -5,16 +5,23 @@ import sqlite3
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-from ui import data, state, widgets
+from ui import calendar_data, data, state, weekly_chart, widgets
 from ui.widgets import (BG, BLUE, BORDER, MAU_TRANG_THAI, MUTED, TEXT, WHITE)
 
 
 def tao_trang_thong_ke():
     state.stats_values, state.stats_progress = ({}, {})
-    numbers = tk.Frame(state.under_frame_2, bg=BG)
+    state.stats_tabs = ttk.Notebook(state.under_frame_2)
+    state.stats_tabs.pack(fill='both', expand=True)
+    chart = tk.Frame(state.stats_tabs, bg=WHITE)
+    overview = tk.Frame(state.stats_tabs, bg=BG)
+    state.stats_tabs.add(chart, text='Biểu đồ tuần')
+    state.stats_tabs.add(overview, text='Tổng quan')
+    weekly_chart.build_chart(chart)
+    numbers = tk.Frame(overview, bg=BG)
     numbers.pack(fill='x', pady=(0, 16))
     for column, (key,
-        caption) in enumerate((('projects', 'Dự án'), ('total', 'Công việc'), ('done', 'Hoàn thành'), ('pending', 'Chưa xong'), ('progress', 'Tỷ lệ hoàn thành'))):
+        caption) in enumerate((('projects', 'Mục tiêu'), ('total', 'Công việc'), ('done', 'Hoàn thành'), ('pending', 'Chưa xong'), ('progress', 'Tỷ lệ hoàn thành'))):
         numbers.columnconfigure(column, weight=1, uniform='numbers')
         card = tk.Frame(numbers, bg=WHITE, highlightbackground=BORDER, highlightthickness=1, padx=16, pady=14)
         card.grid(row=0, column=column, sticky='nsew', padx=(0, 10) if column < 4 else 0)
@@ -26,11 +33,11 @@ def tao_trang_thong_ke():
             bold=True,
             textvariable=state.stats_values[key]).pack(anchor='w',
             pady=(8, 0))
-    bottom = tk.Frame(state.under_frame_2, bg=BG)
+    bottom = tk.Frame(overview, bg=BG)
     bottom.pack(fill='both', expand=True)
     left = tk.Frame(bottom, bg=WHITE, highlightbackground=BORDER, highlightthickness=1)
     left.pack(side='left', fill='both', expand=True, padx=(0, 16))
-    widgets.make_label(left, 'Tiến độ theo dự án', 13, bold=True).pack(anchor='w', padx=20, pady=18)
+    widgets.make_label(left, 'Tiến độ theo mục tiêu', 13, bold=True).pack(anchor='w', padx=20, pady=18)
     state.stats_canvas = tk.Canvas(left, bg=WHITE, highlightthickness=0, yscrollincrement=20)
     scroll = ttk.Scrollbar(left, command=state.stats_canvas.yview, style='Slim.Vertical.TScrollbar')
     state.stats_canvas.configure(yscrollcommand=scroll.set)
@@ -71,6 +78,7 @@ def cap_nhat_thong_ke():
     try:
         summary = data.thong_ke_tong_quan()
         projects = data.thong_ke_du_an()
+        tasks = calendar_data.load_calendar_tasks()
     except sqlite3.Error as error:
         messagebox.showerror('Không thể tải thống kê',
             data.database_error_message(error),
@@ -122,4 +130,5 @@ def cap_nhat_thong_ke():
             pady=(6, 0))
     state.stats_canvas.update_idletasks()
     state.stats_canvas.yview_moveto(position)
+    weekly_chart.refresh_chart(tasks)
     return True

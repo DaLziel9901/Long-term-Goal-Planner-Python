@@ -76,3 +76,16 @@ calendar_scope_tasks = []
 calendar_task_ids = [None]
 calendar_target = None
 calendar_progress_text = None
+
+# Biểu đồ tuần trong tab Thống kê, độc lập với tuần đang xem trên heatmap.
+stats_tabs = None
+stats_chart_week = None
+stats_chart_goal = None
+stats_chart_tasks = []
+stats_chart_goal_ids = [None]
+stats_chart_goal_combo = None
+stats_chart_week_text = None
+stats_chart_counts = []
+stats_chart_figure = None
+stats_chart_axes = None
+stats_chart_canvas = None

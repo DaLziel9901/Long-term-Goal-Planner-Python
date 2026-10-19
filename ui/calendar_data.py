@@ -1,5 +1,3 @@
-"""Chuẩn bị dữ liệu lịch; không tạo widget và không thay đổi database."""
-
 from calendar import monthrange
 from datetime import date, timedelta
 
@@ -101,4 +99,20 @@ def tasks_in_scope(tasks, task_id):
         if task['id'] == task_id or task['parent_id'] in selected:
             selected.add(task['id'])
             result.append(task)
+    return result
+
+
+def weekly_counts(tasks, week_start):
+    """Đếm task lá có đủ ngày từ thứ Hai đến Chủ nhật, bỏ qua task cha."""
+    monday = week_start - timedelta(days=week_start.weekday())
+    leaves = [task for task in tasks if task['scheduled'] and not task['has_children']]
+    result = []
+    for offset in range(7):
+        day = monday + timedelta(days=offset)
+        planned = [task for task in leaves
+                   if task['calendar_start'] <= day <= task['calendar_end']]
+        done = sum(task['is_done'] == 1 for task in planned)
+        total = len(planned)
+        result.append(dict(day=day, done=done, pending=total - done, total=total,
+                           progress=done * 100 / total if total else None))
     return result
