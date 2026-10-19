@@ -1,5 +1,6 @@
 """Chuẩn bị dữ liệu lịch; không tạo widget và không thay đổi database."""
 
+from calendar import monthrange
 from datetime import date, timedelta
 
 from ui import data
@@ -39,37 +40,8 @@ def load_calendar_tasks():
     return result
 
 
-def visible_tasks(tasks, collapsed):
-    """Ẩn các con của nhánh đã thu gọn, không làm mất dữ liệu của nhánh."""
-    hidden = set()
-    result = []
-    for task in tasks:
-        if task['parent_id'] in hidden:
-            hidden.add(task['id'])
-            continue
-        result.append(task)
-        if task['id'] in collapsed:
-            hidden.add(task['id'])
-    return result
-
-
-def date_range(tasks, selected_day, today=None):
-    """Luôn chứa hôm nay, ngày đang xem và toàn bộ khoảng đã lên lịch."""
-    today = today or date.today()
-    dates = [today, selected_day]
-    for task in tasks:
-        if task['scheduled']:
-            dates.extend((task['calendar_start'], task['calendar_end']))
-    start = min(dates)
-    end = max(dates)
-    # Có lề để thanh đầu/cuối không dính sát mép lịch.
-    start -= timedelta(days=min(3, start.toordinal() - 1))
-    end += timedelta(days=min(7, date.max.toordinal() - end.toordinal()))
-    return start, end
-
-
 def tasks_for_period(tasks, selected_day, mode, include_done=False):
-    """Chỉ chọn task lá; xét giao khoảng ngày, không chỉ ngày bắt đầu."""
+    """Task có ngày lấy task lá; task thiếu ngày nằm trong nhóm riêng."""
     start = selected_day
     end = selected_day
     if mode == 'Tuần':
@@ -77,14 +49,12 @@ def tasks_for_period(tasks, selected_day, mode, include_done=False):
         end = start + timedelta(days=6)
     result = []
     for task in tasks:
-        if task['has_children']:
+        if not include_done and task['progress'] == 100:
             continue
-        if not include_done and task['is_done'] == 1:
-            continue
-        if mode == 'Chưa xếp lịch':
-            matches = not task['scheduled']
+        if not task['scheduled']:
+            matches = mode in ('Chưa xếp lịch', 'Tuần')
         else:
-            matches = (task['scheduled'] and task['calendar_start'] <= end
+            matches = (mode != 'Chưa xếp lịch' and not task['has_children'] and task['calendar_start'] <= end
                        and task['calendar_end'] >= start)
         if matches:
             result.append(task)
@@ -98,3 +68,37 @@ def day_completion(tasks, day):
     if not leaves:
         return None
     return sum(task['is_done'] == 1 for task in leaves) * 100 / len(leaves)
+
+
+def shift_month(day, offset):
+    """Chuyển tháng, giữ ngày nếu có thể (31/01 → 28/02 hoặc 29/02)."""
+    index = (day.year - 1) * 12 + day.month - 1 + offset
+    index = max(0, min(9999 * 12 - 1, index))
+    year, month = index // 12 + 1, index % 12 + 1
+    return date(year, month, min(day.day, monthrange(year, month)[1]))
+
+
+def heatmap_range(tasks, selected_day, today=None):
+    """Ít nhất sáu tháng; chỉ task có đủ ngày mới mở rộng khoảng lịch."""
+    today = today or date.today()
+    days = [shift_month(today, -2), shift_month(today, 3), selected_day]
+    for task in tasks:
+        if task['scheduled']:
+            days.extend((task['calendar_start'], task['calendar_end']))
+    first = min(days).replace(day=1)
+    last = max(days)
+    last = last.replace(day=monthrange(last.year, last.month)[1])
+    return first, last
+
+
+def tasks_in_scope(tasks, task_id):
+    """Một mục tiêu gồm chính nó và toàn bộ con cháu, không đếm cha hai lần."""
+    if task_id is None:
+        return tasks
+    selected = {task_id}
+    result = []
+    for task in tasks:
+        if task['id'] == task_id or task['parent_id'] in selected:
+            selected.add(task['id'])
+            result.append(task)
+    return result

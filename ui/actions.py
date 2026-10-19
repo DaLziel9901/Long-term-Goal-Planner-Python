@@ -167,6 +167,12 @@ def set_active_frame(frame, active_button):
     for page in (state.under_frame_1, state.under_frame_2, state.under_frame_3):
         page.pack_forget()
     frame.pack(fill='both', expand=True, padx=28, pady=(0, 12))
+    # Tab lịch dành toàn bộ chiều cao cho lịch và danh sách công việc.
+    introduction = state.firstSay.master
+    if active_button is state.button3:
+        introduction.pack_forget()
+    else:
+        introduction.pack(fill='x', padx=28, pady=(18, 16), before=frame)
     state.active_nav_button = active_button
     for button in (state.button1, state.button2, state.button3):
         selected = button is active_button
@@ -246,7 +252,7 @@ def lam_moi_du_lieu(project_id=None):
 
 def chon_cong_viec(tree):
     selected = tree.selection()
-    if not selected:
+    if not selected or not selected[0].isdigit():
         messagebox.showinfo('Chọn công việc',
             'Bạn hãy chọn một công việc trong danh sách.',
             parent=state.window)

@@ -272,7 +272,8 @@ def mo_form_cong_viec(task_id=None, project_id=None, planned_date=None):
         except sqlite3.Error as error:
             messagebox.showerror('Chưa lưu được công việc', data.database_error_message(error), parent=dialog)
             return 'break'
-        if state.active_nav_button is state.button3 and start_entry.get().strip():
+        if (state.active_nav_button is state.button3
+                and start_entry.get().strip() and end_entry.get().strip()):
             state.selected_day = datetime.strptime(start_entry.get().strip(), '%d/%m/%Y').date()
             state.week_start = state.selected_day - timedelta(days=state.selected_day.weekday())
         if state.active_nav_button is state.button3:

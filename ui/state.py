@@ -54,8 +54,6 @@ window = None
 
 # Lịch mục tiêu: dữ liệu, lựa chọn và các Canvas được cuộn đồng bộ.
 calendar_tasks = []
-calendar_rows = []
-calendar_collapsed = set()
 calendar_selected_task = None
 calendar_mode = None
 calendar_include_done = None
@@ -67,3 +65,14 @@ calendar_start = None
 calendar_end = None
 calendar_days = 0
 calendar_width = 0
+calendar_panes = None
+calendar_upper = None
+calendar_detail = None
+calendar_split_initialized = False
+calendar_weeks = 0
+calendar_months = []
+calendar_month_lookup = {}
+calendar_scope_tasks = []
+calendar_task_ids = [None]
+calendar_target = None
+calendar_progress_text = None
