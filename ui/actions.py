@@ -23,7 +23,6 @@ def show_empty_project():
 
 
 def show_sample(exam):
-    """Đọc dự án từ SQLite rồi cập nhật widget có sẵn, không tạo thêm cửa sổ."""
     try:
         project = data.get_project(exam)
         tasks = data.danh_sach_cong_viec(project['id']) if project else []
@@ -96,7 +95,6 @@ def refresh_project_list(select_id=None):
 
 
 def xoa_du_an_dang_chon():
-    """Hỏi xác nhận trước khi xóa; chỉ đổi giao diện sau khi commit thành công."""
     project_id = state.selected_project_id
     if project_id is None:
         messagebox.showinfo('Chọn dự án',
@@ -135,7 +133,6 @@ def xoa_du_an_dang_chon():
 
 
 def show_project():
-    """Giữ hàm nhập dự án của bản cũ; chuyển việc nhập sang hộp thoại đầy đủ."""
     from ui import forms
     return forms.open_add_project()
 
@@ -201,7 +198,6 @@ def show_frame3():
 
 
 def cap_nhat_cong_viec(tasks=None):
-    """Nạp công việc của dự án đang chọn và tính tiến độ thực tế."""
     if tasks is None:
         try:
             tasks = data.danh_sach_cong_viec(state.selected_project_id) if state.selected_project_id else []

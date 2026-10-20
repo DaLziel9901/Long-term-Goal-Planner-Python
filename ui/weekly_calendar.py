@@ -1,4 +1,4 @@
-"""Điều phối lịch heatmap và danh sách việc; giữ tên module để dùng callback cũ."""
+"""Điều phối lịch heatmap và danh sách công việc."""
 
 import sqlite3
 import tkinter as tk
@@ -21,6 +21,9 @@ def tao_trang_lich():
     state.selected_day = date.today()
     state.week_start = state.selected_day - timedelta(days=state.selected_day.weekday())
     state.calendar_tasks = []
+    state.window.today_status_job = None
+    state.window.bind('<Destroy>', huy_cap_nhat_thong_tin_hom_nay, add='+')
+    cap_nhat_thong_tin_hom_nay()
     state.calendar_scope_tasks = []
     state.calendar_selected_task = None
     state.calendar_mode = tk.StringVar(state.window, 'Tuần')
@@ -73,7 +76,6 @@ def tao_trang_lich():
     state.calendar_canvas.configure(xscrollcommand=sync_x)
     state.calendar_canvas.bind('<Configure>', lambda event: timeline.draw_grid())
     state.calendar_canvas.bind('<Button-1>', chon_o_ngay)
-    state.calendar_canvas.bind('<Motion>', thong_tin_o_ngay)
     for canvas in (state.calendar_canvas, state.calendar_header):
         canvas.bind('<MouseWheel>', cuon_chuot)
 
@@ -143,6 +145,24 @@ def cuon_chuot(event):
     return 'break'
 
 
+def cap_nhat_thong_tin_hom_nay():
+    """Đếm task lá của hôm nay trên mọi mục tiêu, kể cả việc đã xong."""
+    state.window.today_status_job = None
+    today = date.today()
+    tasks = calendar_data.tasks_for_period(state.calendar_tasks, today, 'Ngày', True)
+    done = sum(task['is_done'] == 1 for task in tasks)
+    total = len(tasks)
+    state.status_text.set(
+        f'Hôm nay: {today:%d/%m/%Y} | Tổng: {total} công việc | '
+        f'Đã xong: {done} | Chưa xong: {total - done}')
+
+
+def huy_cap_nhat_thong_tin_hom_nay(event):
+    if event.widget is state.window and state.window.today_status_job is not None:
+        state.window.after_cancel(state.window.today_status_job)
+        state.window.today_status_job = None
+
+
 def cap_nhat_lich_tuan():
     """Sau khi lưu: đọc lại dữ liệu, giữ mục tiêu đang chọn nếu nó còn tồn tại."""
     try:
@@ -160,6 +180,10 @@ def cap_nhat_lich_tuan():
         state.calendar_selected_task = None
     state.calendar_target.current(state.calendar_task_ids.index(state.calendar_selected_task))
     ve_cac_ngay()
+    # Hiện tổng kết sau khi callback thêm/sửa/xóa đã ghi thông báo thao tác.
+    if state.window.today_status_job is not None:
+        state.window.after_cancel(state.window.today_status_job)
+    state.window.today_status_job = state.window.after_idle(cap_nhat_thong_tin_hom_nay)
     return True
 
 
@@ -190,7 +214,6 @@ def chon_task(task_id):
     task = next((task for task in state.calendar_tasks if task['id'] == task_id), None)
     if task and task['scheduled']:
         chon_ngay(task['calendar_start'])
-    state.status_text.set(state.calendar_selection_text.get())
 
 
 def chon_muc_tieu(event=None):
@@ -205,16 +228,6 @@ def chon_o_ngay(event):
         if state.calendar_mode.get() == 'Chưa xếp lịch':
             state.calendar_mode.set('Ngày')
         chon_ngay(day)
-
-
-def thong_tin_o_ngay(event):
-    day = timeline.day_at(state.calendar_canvas.canvasx(event.x), state.calendar_canvas.canvasy(event.y))
-    if day is None:
-        return
-    leaves = calendar_data.tasks_for_period(state.calendar_scope_tasks, day, 'Ngày', True)
-    percent = calendar_data.day_completion(state.calendar_scope_tasks, day)
-    progress = 'Chưa có việc được lên lịch' if percent is None else f'{percent:.0f}% hoàn thành'
-    state.status_text.set(f'{day:%d/%m/%Y} · {len(leaves)} công việc · {progress}')
 
 
 def chon_ngay(day):

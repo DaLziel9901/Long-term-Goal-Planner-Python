@@ -12,7 +12,7 @@ from ui.widgets import (BLUE, BORDER, LIGHT_BLUE, MUTED, SOFT, TEXT, WHITE)
 
 
 def open_add_project():
-    """Chỉ mở một Toplevel; Lưu kiểm tra dữ liệu rồi commit trước khi refresh."""
+    """Chỉ mở một hộp thoại thêm mục tiêu tại một thời điểm."""
     if state.add_dialog is not None and state.add_dialog.winfo_exists():
         state.add_dialog.lift()
         state.add_dialog.focus_set()
@@ -278,7 +278,6 @@ def mo_form_cong_viec(task_id=None, project_id=None, planned_date=None):
             state.week_start = state.selected_day - timedelta(days=state.selected_day.weekday())
         if state.active_nav_button is state.button3:
             state.calendar_selected_task = saved_id
-        # Chỉ tải lại các trang khi hàm database đã lưu thành công.
         dong_form()
         if actions.lam_moi_du_lieu(task_id if task else chosen_project):
             state.status_text.set('Đã lưu công việc.')

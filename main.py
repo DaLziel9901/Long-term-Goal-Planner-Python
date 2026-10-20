@@ -7,7 +7,6 @@ from ui import actions, data, interface
 
 
 def main():
-    """Tạo cửa sổ, chuẩn bị dữ liệu, rồi nhận thao tác của người dùng."""
     window = interface.build_interface()
     try:
         data.init_database()

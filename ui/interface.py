@@ -8,7 +8,6 @@ from ui.widgets import (BG, BLUE, BORDER, LIGHT_BLUE, MUTED, TEXT, WHITE)
 
 
 def build_interface():
-    """Tạo giao diện một lần; các thao tác sau chỉ cập nhật nội dung và trạng thái."""
     state.task_dialog, state.add_dialog, state.selected_project_id = (None, None, None)
     state.window = tk.Tk()
     state.window.title('Lịch dài hạn')

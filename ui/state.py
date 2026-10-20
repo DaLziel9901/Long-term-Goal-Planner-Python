@@ -1,4 +1,4 @@
-"""Trạng thái dùng chung: widget và task đang chọn, không chứa xử lý nút bấm."""
+"""Widget và trạng thái dùng chung giữa các module giao diện."""
 
 Sample = []
 active_nav_button = None
@@ -52,7 +52,7 @@ week_start = None
 week_title = None
 window = None
 
-# Lịch mục tiêu: dữ liệu, lựa chọn và các Canvas được cuộn đồng bộ.
+# Lịch mục tiêu.
 calendar_tasks = []
 calendar_selected_task = None
 calendar_mode = None
@@ -77,7 +77,7 @@ calendar_task_ids = [None]
 calendar_target = None
 calendar_progress_text = None
 
-# Biểu đồ tuần trong tab Thống kê, độc lập với tuần đang xem trên heatmap.
+# Tuần thống kê độc lập với tuần đang xem trên lịch.
 stats_tabs = None
 stats_chart_week = None
 stats_chart_goal = None

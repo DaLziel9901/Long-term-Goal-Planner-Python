@@ -31,7 +31,6 @@ def make_label(parent, text='', size=10, color=TEXT, bold=False, bg=WHITE, **opt
 
 
 def make_button(parent, text, command, primary=False):
-    """Nút dùng chung có màu khi rê chuột, luôn gắn hành động thực tế."""
     base = BLUE if primary else WHITE
     hover = BLUE_HOVER if primary else LIGHT_BLUE
     button = tk.Button(parent,
@@ -83,7 +82,6 @@ def tao_bang(parent, columns, height=6, expand=True):
 
 
 def configure_styles(window):
-    """Cấu hình màu sắc, font và style ttk dùng chung."""
     style = ttk.Style(window)
     style.theme_use('clam')
     style.configure('Project.Treeview',
