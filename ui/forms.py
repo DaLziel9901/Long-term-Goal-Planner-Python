@@ -8,6 +8,7 @@ from tkinter import messagebox, ttk
 
 from database import get_children
 from ui import actions, data, state, widgets
+from ui.date_picker import DateField
 from ui.widgets import (BLUE, BORDER, LIGHT_BLUE, MUTED, SOFT, TEXT, WHITE)
 
 
@@ -72,10 +73,10 @@ def open_add_project():
         sticky='w',
         padx=(12, 0),
         pady=(0, 7))
-    start_entry = ttk.Entry(dates, width=20, style='Form.TEntry')
-    end_entry = ttk.Entry(dates, width=20, style='Form.TEntry')
-    start_entry.grid(row=1, column=0, sticky='ew', padx=(0, 6))
-    end_entry.grid(row=1, column=1, sticky='ew', padx=(12, 0))
+    start_field, end_field = DateField(dates), DateField(dates)
+    start_field.grid(row=1, column=0, sticky='ew', padx=(0, 6))
+    end_field.grid(row=1, column=1, sticky='ew', padx=(12, 0))
+    start_entry, end_entry = start_field.entry, end_field.entry
     widgets.make_label(form,
         'DD/MM/YYYY · Có thể để trống ngày và mô tả',
         9,
@@ -220,10 +221,10 @@ def mo_form_cong_viec(task_id=None, project_id=None, planned_date=None):
     dates.columnconfigure((0, 1), weight=1, uniform='dates')
     widgets.make_label(dates, 'Ngày dự kiến').grid(row=0, column=0, sticky='w', pady=(0, 6))
     widgets.make_label(dates, 'Hạn hoàn thành').grid(row=0, column=1, sticky='w', padx=(12, 0), pady=(0, 6))
-    start_entry = ttk.Entry(dates, width=20, style='Form.TEntry')
-    end_entry = ttk.Entry(dates, width=20, style='Form.TEntry')
-    start_entry.grid(row=1, column=0, sticky='ew', padx=(0, 6))
-    end_entry.grid(row=1, column=1, sticky='ew', padx=(12, 0))
+    start_field, end_field = DateField(dates), DateField(dates)
+    start_field.grid(row=1, column=0, sticky='ew', padx=(0, 6))
+    end_field.grid(row=1, column=1, sticky='ew', padx=(12, 0))
+    start_entry, end_entry = start_field.entry, end_field.entry
     widgets.make_label(form,
         'DD/MM/YYYY · Để trống nếu chưa xếp lịch',
         9,

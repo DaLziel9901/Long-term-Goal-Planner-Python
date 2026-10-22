@@ -2,7 +2,10 @@
 
 
 import tkinter as tk
+from pathlib import Path
 from tkinter import ttk
+
+from PIL import Image, ImageTk
 from ui import actions, forms, state, statistics, weekly_calendar, widgets
 from ui.widgets import (BG, BLUE, BORDER, LIGHT_BLUE, MUTED, TEXT, WHITE)
 
@@ -18,17 +21,30 @@ def build_interface():
     widgets.configure_styles(state.window)
     state.taskbar = tk.Frame(state.window, bg=WHITE, highlightbackground=BORDER, highlightthickness=1)
     state.taskbar.pack(fill='x')
-    state.title1 = widgets.make_label(state.taskbar, 'Lịch dài hạn', 15, TEXT, True)
-    state.title1.pack(side='left', padx=(28, 38), pady=20)
-    state.button1 = widgets.make_button(state.taskbar, 'Kế hoạch', actions.show_frame1)
-    state.button2 = widgets.make_button(state.taskbar, 'Thống kê', actions.show_frame2)
-    state.button3 = widgets.make_button(state.taskbar, 'Lịch mục tiêu', actions.show_frame3)
+    brand = tk.Frame(state.taskbar, bg=WHITE)
+    brand.pack(side='left', padx=(28, 30), pady=18)
+    logo_path = Path(__file__).resolve().parent / 'assets' / 'logo.png'
+    with Image.open(logo_path) as source:
+        logo_image = ImageTk.PhotoImage(
+            source.convert('RGBA').resize((36, 36), Image.Resampling.LANCZOS),
+            master=state.window,
+        )
+    logo_label = tk.Label(brand, image=logo_image, bg=WHITE, bd=0, padx=0, pady=0)
+    logo_label.image = logo_image
+    logo_label.pack(side='left', padx=(0, 10))
+    state.title1 = widgets.make_label(brand, 'Lịch dài hạn', 15, TEXT, True)
+    state.title1.pack(side='left')
+    navigation = widgets.RoundedPanel(state.taskbar)
+    navigation.pack(side='left', pady=12)
+    state.button1 = widgets.make_button(navigation.content, 'Kế hoạch', actions.show_frame1, variant='nav', icon='list')
+    state.button2 = widgets.make_button(navigation.content, 'Thống kê', actions.show_frame2, variant='nav', icon='chart')
+    state.button3 = widgets.make_button(navigation.content, 'Lịch mục tiêu', actions.show_frame3, variant='nav', icon='calendar')
     for button in (state.button1, state.button2, state.button3):
-        button.pack(side='left', padx=4, pady=12)
-        button.bind('<Enter>', lambda event, b=button: b.configure(bg=LIGHT_BLUE))
-        button.bind('<Leave>',
-            lambda event,
-            b=button: b.configure(bg=LIGHT_BLUE if b is state.active_nav_button else WHITE))
+        button.pack(side='left', padx=1)
+    state.page_title_icons = {
+        name: widgets.make_icon_image(state.window, name, size=32, gap=10)
+        for name in ('list', 'chart', 'calendar')
+    }
     state.page_title = tk.StringVar(state.window)
     state.page_subtitle = tk.StringVar(state.window)
     introduction = tk.Frame(state.window, bg=BG)
@@ -37,12 +53,14 @@ def build_interface():
         size=21,
         bold=True,
         bg=BG,
+        compound='left',
         textvariable=state.page_title)
     state.firstSay.pack(anchor='w')
     widgets.make_label(introduction,
         color=MUTED,
         bg=BG,
         textvariable=state.page_subtitle).pack(anchor='w',
+        padx=(42, 0),
         pady=(5, 0))
     state.status_text = tk.StringVar(state.window, 'Sẵn sàng')
     widgets.make_label(state.window,
@@ -90,10 +108,8 @@ def build_interface():
     footer.pack(side='bottom', fill='x', padx=16, pady=16)
     state.button_add = widgets.make_button(footer, '+ Thêm mục tiêu', actions.show_project, primary=True)
     state.button_add.pack(fill='x')
-    state.button_delete = widgets.make_button(footer, 'Xóa mục tiêu', actions.xoa_du_an_dang_chon)
-    state.button_delete.configure(fg='#A6524C', activeforeground='#A6524C', pady=7)
-    state.button_delete.bind('<Enter>', lambda event: state.button_delete.configure(bg='#FAEEEE'))
-    state.button_delete.bind('<Leave>', lambda event: state.button_delete.configure(bg=WHITE))
+    state.button_delete = widgets.make_button(footer, 'Xóa mục tiêu', actions.xoa_du_an_dang_chon,
+                                               variant='danger', compact=True)
     state.button_delete.pack(fill='x', pady=(6, 0))
     tk.Frame(state.project_frame, bg=BORDER, height=1).pack(side='bottom', fill='x', padx=16)
     list_frame = tk.Frame(state.project_frame, bg=WHITE)
@@ -139,9 +155,9 @@ def build_interface():
     state.project_heading.pack(fill='x', pady=(0, 5))
     detail_actions = tk.Frame(state.content_inner, bg=WHITE)
     detail_actions.pack(fill='x')
-    widgets.make_button(detail_actions, 'Về task cha', actions.ve_task_cha).pack(side='left')
-    widgets.make_button(detail_actions, 'Sửa mục này', actions.sua_task_hien_tai).pack(side='left')
-    widgets.make_button(detail_actions, 'Đổi hoàn thành', actions.doi_trang_thai_hien_tai).pack(side='left')
+    widgets.make_button(detail_actions, 'Về mục trước', actions.ve_task_cha, compact=True).pack(side='left', padx=(0, 6))
+    widgets.make_button(detail_actions, 'Sửa mục này', actions.sua_task_hien_tai, compact=True).pack(side='left', padx=(0, 6))
+    widgets.make_button(detail_actions, 'Đổi hoàn thành', actions.doi_trang_thai_hien_tai, compact=True).pack(side='left')
     tk.Frame(state.content_inner, bg=BORDER, height=1).pack(fill='x', pady=10)
     date_cards = tk.Frame(state.content_inner, bg=WHITE)
     date_cards.pack(fill='x')
@@ -173,8 +189,7 @@ def build_interface():
     add_task_button = widgets.make_button(heading,
         '+ Công việc',
         lambda: forms.mo_form_cong_viec(project_id=state.selected_project_id),
-        True)
-    add_task_button.configure(pady=7)
+        True, compact=True)
     add_task_button.pack(side='right')
     state.empty_label = widgets.make_label(state.content_inner, color=MUTED, size=9)
     state.empty_label.pack(fill='x', pady=(0, 6))
@@ -186,14 +201,13 @@ def build_interface():
     state.task_list.bind('<Return>', lambda event: actions.mo_viec_da_chon())
     action_bar = tk.Frame(state.content_inner, bg=WHITE)
     action_bar.pack(fill='x', pady=(8, 0))
-    widgets.make_button(action_bar, 'Mở', actions.mo_viec_da_chon).pack(side='left')
+    widgets.make_button(action_bar, 'Mở', actions.mo_viec_da_chon).pack(side='left', padx=(0, 6))
     widgets.make_button(action_bar,
         'Sửa',
-        lambda: actions.sua_viec_da_chon(state.task_list)).pack(side='left')
+        lambda: actions.sua_viec_da_chon(state.task_list)).pack(side='left', padx=(0, 6))
     widgets.make_button(action_bar,
         'Xóa',
-        lambda: actions.xoa_viec_da_chon(state.task_list)).pack(side='left',
-        padx=4)
+        lambda: actions.xoa_viec_da_chon(state.task_list), variant='danger').pack(side='left')
     widgets.make_button(action_bar,
         'Đánh dấu xong',
         lambda: actions.danh_dau_hoan_thanh(state.task_list)).pack(side='right')

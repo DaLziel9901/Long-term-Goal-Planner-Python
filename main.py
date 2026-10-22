@@ -1,4 +1,4 @@
-"""Điểm khởi động ứng dụng: chạy python main.py từ thư mục gốc."""
+"""Điểm khởi động ứng dụng: chạy python main.py từ thư mục gốc"""
 
 import sqlite3
 from tkinter import messagebox

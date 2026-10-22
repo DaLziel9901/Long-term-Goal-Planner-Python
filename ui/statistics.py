@@ -11,12 +11,42 @@ from ui.widgets import (BG, BLUE, BORDER, MAU_TRANG_THAI, MUTED, TEXT, WHITE)
 
 def tao_trang_thong_ke():
     state.stats_values, state.stats_progress = ({}, {})
-    state.stats_tabs = ttk.Notebook(state.under_frame_2)
+    header = tk.Frame(state.under_frame_2, bg=BG)
+    header.pack(fill='x', pady=(10, 8))
+    title_block = tk.Frame(header, bg=BG)
+    title_block.pack(side='left')
+    heading_icon = widgets.make_icon_image(state.window, 'chart', size=28, gap=8)
+    state.stats_heading = widgets.make_label(title_block, 'Thống kê', size=18, bold=True,
+                                            bg=BG, image=heading_icon, compound='left')
+    state.stats_heading.image = heading_icon
+    state.stats_heading.pack(anchor='w')
+    widgets.make_label(title_block, 'Tiến độ công việc của bạn', size=9,
+                       color=MUTED, bg=BG).pack(anchor='w', padx=(36, 0), pady=(2, 0))
+    selector = widgets.RoundedPanel(header)
+    selector.pack(side='right')
+    state.stats_tab_buttons = []
+    for index, caption in enumerate(('Biểu đồ tuần', 'Tổng quan')):
+        button = widgets.make_button(selector.content, caption,
+                                     lambda chosen=index: select_stats_tab(chosen),
+                                     variant='nav', compact=True)
+        button.configure(height=32)
+        button.pack(side='left', padx=1)
+        button.bind('<Left>', lambda event: cycle_stats_tab(event, -1))
+        button.bind('<Right>', cycle_stats_tab)
+        button.bind('<Home>', lambda event: select_stats_tab(0, focus=True))
+        button.bind('<End>', lambda event: select_stats_tab(1, focus=True))
+        state.stats_tab_buttons.append(button)
+    state.stats_tabs = ttk.Notebook(state.under_frame_2, style='Stats.TNotebook', takefocus=False)
     state.stats_tabs.pack(fill='both', expand=True)
     chart = tk.Frame(state.stats_tabs, bg=WHITE)
     overview = tk.Frame(state.stats_tabs, bg=BG)
     state.stats_tabs.add(chart, text='Biểu đồ tuần')
     state.stats_tabs.add(overview, text='Tổng quan')
+    state.stats_pages = (chart, overview)
+    state.stats_tabs.bind('<<NotebookTabChanged>>', sync_stats_tabs)
+    state.window.bind('<Control-Tab>', cycle_stats_tab, add='+')
+    state.window.bind('<Control-Shift-Tab>', lambda event: cycle_stats_tab(event, -1), add='+')
+    sync_stats_tabs()
     weekly_chart.build_chart(chart)
     numbers = tk.Frame(overview, bg=BG)
     numbers.pack(fill='x', pady=(0, 16))
@@ -72,6 +102,29 @@ def tao_trang_thong_ke():
         color='#A6524C',
         bold=True,
         textvariable=state.stats_status_values['overdue']).pack(side='right')
+
+
+def sync_stats_tabs(event=None):
+    current = state.stats_tabs.index('current')
+    for index, button in enumerate(state.stats_tab_buttons):
+        button.configure(selected=index == current)
+
+
+def select_stats_tab(index, focus=False):
+    """Đổi trang có sẵn, giữ bộ lọc và canvas biểu đồ hiện tại."""
+    if state.stats_tabs.index('current') != index:
+        state.stats_tabs.select(index)
+    sync_stats_tabs()
+    if focus:
+        state.stats_tab_buttons[index].focus_keyboard()
+    return 'break'
+
+
+def cycle_stats_tab(event=None, offset=1):
+    if not state.under_frame_2.winfo_ismapped():
+        return None
+    current = state.stats_tabs.index('current')
+    return select_stats_tab((current + offset) % len(state.stats_tab_buttons), focus=True)
 
 
 def cap_nhat_thong_ke():

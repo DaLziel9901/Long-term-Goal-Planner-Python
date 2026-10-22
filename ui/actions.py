@@ -8,7 +8,6 @@ from tkinter import messagebox, ttk
 
 from database import calc_progress, get_task_by_id
 from ui import data, state
-from ui.widgets import (BLUE, LIGHT_BLUE, MUTED, WHITE)
 
 
 def show_empty_project():
@@ -162,23 +161,26 @@ def scroll_content(event):
 
 def set_active_frame(frame, active_button):
     for page in (state.under_frame_1, state.under_frame_2, state.under_frame_3):
-        page.pack_forget()
-    frame.pack(fill='both', expand=True, padx=28, pady=(0, 12))
-    # Tab lịch dành toàn bộ chiều cao cho lịch và danh sách công việc.
+        if page is not frame and page.winfo_manager() == 'pack':
+            page.pack_forget()
+    if frame.winfo_manager() != 'pack':
+        frame.pack(fill='both', expand=True, padx=28, pady=(0, 12))
+    # Thống kê và lịch có tiêu đề gọn riêng trong trang.
     introduction = state.firstSay.master
-    if active_button is state.button3:
+    compact_header = active_button in (state.button2, state.button3)
+    if compact_header and introduction.winfo_manager() == 'pack':
         introduction.pack_forget()
-    else:
+    elif not compact_header and introduction.winfo_manager() != 'pack':
         introduction.pack(fill='x', padx=28, pady=(18, 16), before=frame)
     state.active_nav_button = active_button
     for button in (state.button1, state.button2, state.button3):
-        selected = button is active_button
-        button.configure(bg=LIGHT_BLUE if selected else WHITE, fg=BLUE if selected else MUTED)
+        button.configure(selected=button is active_button)
     headings = {state.button1: ('Kế hoạch', 'Mục tiêu và công việc của bạn'),
         state.button2: ('Thống kê', 'Tiến độ và trạng thái công việc'),
         state.button3: ('Lịch mục tiêu', 'Thời gian, tiến độ và những việc cần làm')}
     state.page_title.set(headings[active_button][0])
     state.page_subtitle.set(headings[active_button][1])
+    state.firstSay.configure(image=state.page_title_icons[active_button.cget('icon')])
 
 
 def show_frame1():

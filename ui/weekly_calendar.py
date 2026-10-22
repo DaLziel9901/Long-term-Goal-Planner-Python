@@ -6,15 +6,13 @@ from datetime import date, timedelta
 from tkinter import messagebox, ttk
 
 from ui import actions, calendar_data, data, forms, state, timeline, widgets
-from ui.widgets import BG, BLUE, BORDER, WHITE
+from ui.widgets import BG, BLUE, BORDER, LIGHT_BLUE, MUTED, WHITE
 
-MIN_HEATMAP_HEIGHT = timeline.GRID_HEIGHT + timeline.HEADER_HEIGHT + 48
+MIN_HEATMAP_HEIGHT = timeline.GRID_HEIGHT + timeline.HEADER_HEIGHT + 50
 
 
 def calendar_button(parent, text, command, primary=False):
-    button = widgets.make_button(parent, text, command, primary)
-    button.configure(pady=5, padx=10)
-    return button
+    return widgets.make_button(parent, text, command, primary, compact=True)
 
 
 def tao_trang_lich():
@@ -29,6 +27,7 @@ def tao_trang_lich():
     state.calendar_mode = tk.StringVar(state.window, 'Tuần')
     state.calendar_include_done = tk.BooleanVar(state.window, False)
     state.calendar_split_initialized = False
+    state.calendar_compact = None
     state.calendar_task_ids = [None]
     state.calendar_progress_text = tk.StringVar(state.window, '')
     state.calendar_selection_text = tk.StringVar(state.window)
@@ -38,14 +37,19 @@ def tao_trang_lich():
 
     toolbar = tk.Frame(state.under_frame_3, bg=BG)
     toolbar.grid(row=0, column=0, sticky='ew', pady=(0, 6))
+    heading_icon = widgets.make_icon_image(state.window, 'calendar', size=22, gap=6)
+    heading = widgets.make_label(toolbar, 'Lịch mục tiêu', size=12, bold=True, bg=BG,
+                                  image=heading_icon, compound='left')
+    heading.image = heading_icon
+    heading.pack(side='left', padx=(0, 12))
     calendar_button(toolbar, '+ Mục tiêu', forms.open_add_project, True).pack(side='left')
     calendar_button(toolbar, 'Hôm nay', ve_tuan_hien_tai).pack(side='right')
     calendar_button(toolbar, 'Tháng sau ›', lambda: chuyen_thang(1)).pack(side='right', padx=4)
     calendar_button(toolbar, '‹ Tháng trước', lambda: chuyen_thang(-1)).pack(side='right')
 
     state.calendar_panes = tk.PanedWindow(
-        state.under_frame_3, orient='vertical', bg=BORDER, borderwidth=0,
-        sashwidth=8, sashrelief='flat', showhandle=True, handlesize=10, opaqueresize=True,
+        state.under_frame_3, orient='vertical', bg=BG, borderwidth=0,
+        sashwidth=10, sashrelief='flat', showhandle=False, sashcursor='sb_v_double_arrow', opaqueresize=True,
     )
     state.calendar_panes.grid(row=1, column=0, sticky='nsew')
     state.calendar_upper = tk.Frame(state.calendar_panes, bg=BG)
@@ -64,8 +68,8 @@ def tao_trang_lich():
     state.calendar_canvas = tk.Canvas(board, height=timeline.GRID_HEIGHT, bg=WHITE,
                                       highlightthickness=0, xscrollincrement=timeline.CELL_STEP)
     state.calendar_canvas.grid(row=1, column=1, sticky='nsew')
-    horizontal = ttk.Scrollbar(board, orient='horizontal', command=cuon_ngang,
-                               style='Slim.Horizontal.TScrollbar')
+    horizontal = widgets.AutoScrollbar(board, orient='horizontal', command=cuon_ngang,
+                                      style='Calendar.Horizontal.TScrollbar')
     horizontal.grid(row=2, column=1, sticky='ew')
 
     def sync_x(first, last):
@@ -79,57 +83,120 @@ def tao_trang_lich():
     for canvas in (state.calendar_canvas, state.calendar_header):
         canvas.bind('<MouseWheel>', cuon_chuot)
 
-    selection = tk.Frame(state.calendar_upper, bg=BG)
+    selection = tk.Frame(state.calendar_upper, bg=WHITE, padx=10, pady=1,
+                         highlightbackground=BORDER, highlightthickness=1)
     selection.grid(row=1, column=0, sticky='ew', pady=(4, 0))
-    widgets.make_label(selection, 'Mục tiêu', bg=BG, size=9).pack(side='left', padx=(0, 6))
-    state.calendar_target = ttk.Combobox(selection, values=('Tất cả mục tiêu',),
-                                        state='readonly', width=28)
+    selection.columnconfigure(0, weight=1)
+    scope = tk.Frame(selection, bg=WHITE)
+    scope.grid(row=0, column=0, sticky='w')
+    widgets.make_label(scope, 'Mục tiêu', color=MUTED, size=9).pack(side='left', padx=(0, 10))
+    state.calendar_target = ttk.Combobox(scope, values=('Tất cả mục tiêu',),
+                                        state='readonly', width=28, style='Calendar.TCombobox')
     state.calendar_target.current(0)
     state.calendar_target.pack(side='left')
     state.calendar_target.bind('<<ComboboxSelected>>', chon_muc_tieu)
-    widgets.make_label(selection, textvariable=state.calendar_progress_text,
-                       bg=BG, size=9, color=BLUE).pack(side='left', padx=8)
-    calendar_button(selection, 'Sửa', sua_task_tren_lich).pack(side='right')
-    calendar_button(selection, '+ Việc con', them_task_con).pack(side='right', padx=4)
-    calendar_button(selection, 'Mở chi tiết', mo_chi_tiet).pack(side='right')
+    widgets.make_label(scope, textvariable=state.calendar_progress_text,
+                       size=9, color=BLUE).pack(side='left', padx=8)
+    goal_actions = tk.Frame(selection, bg=WHITE)
+    goal_actions.grid(row=0, column=1, sticky='e', padx=(10, 0))
+    calendar_button(goal_actions, 'Mở chi tiết', mo_chi_tiet).pack(side='left', padx=(0, 4))
+    calendar_button(goal_actions, '+ Việc con', them_task_con).pack(side='left', padx=(0, 4))
+    calendar_button(goal_actions, 'Sửa', sua_task_tren_lich).pack(side='left')
+    for button in goal_actions.winfo_children():
+        button.configure(height=30, font=('Segoe UI', 9), padx=10)
 
     detail = tk.Frame(state.calendar_panes, bg=WHITE, highlightbackground=BORDER, highlightthickness=1)
     state.calendar_detail = detail
-    state.calendar_panes.add(detail, minsize=130, stretch='always')
+    state.calendar_panes.add(detail, minsize=150, stretch='always')
     filters = tk.Frame(detail, bg=WHITE)
-    filters.pack(fill='x', padx=10, pady=6)
-    mode = ttk.Combobox(filters, values=('Ngày', 'Tuần', 'Chưa xếp lịch'),
-                         textvariable=state.calendar_mode, state='readonly', width=16)
-    mode.pack(side='left')
-    mode.bind('<<ComboboxSelected>>', lambda event: chon_ngay(state.selected_day))
+    state.calendar_filter_bar = filters
+    filters.pack(fill='x', padx=10, pady=(5, 3))
+    filters.columnconfigure(1, weight=1)
+    mode_group = widgets.RoundedPanel(filters)
+    mode_group.grid(row=0, column=0, sticky='w')
+    state.calendar_mode_buttons = {}
+    for name in ('Ngày', 'Tuần', 'Chưa xếp lịch'):
+        button = widgets.make_button(mode_group.content, name, lambda value=name: chon_che_do(value),
+                                     variant='nav', compact=True)
+        button.configure(font=('Segoe UI Semibold', 9), padx=8, height=30)
+        button.pack(side='left', padx=1)
+        state.calendar_mode_buttons[name] = button
+    state.calendar_mode.trace_add('write', cap_nhat_nut_che_do)
+    cap_nhat_nut_che_do()
     ttk.Checkbutton(filters, text='Cả việc đã xong', variable=state.calendar_include_done,
-                    command=lambda: chon_ngay(state.selected_day)).pack(side='left', padx=12)
-    calendar_button(filters, '+ Công việc', lambda: forms.mo_form_cong_viec(
+                    style='Calendar.TCheckbutton', command=lambda: chon_ngay(state.selected_day)).grid(
+                        row=0, column=1, sticky='w', padx=10)
+    task_actions = tk.Frame(filters, bg=WHITE)
+    state.calendar_task_actions = task_actions
+    task_actions.grid(row=0, column=2, sticky='e')
+    calendar_button(task_actions, 'Sửa', lambda: actions.sua_viec_da_chon(state.day_task_list)).pack(side='left')
+    calendar_button(task_actions, 'Xong', lambda: actions.danh_dau_hoan_thanh(state.day_task_list)).pack(side='left', padx=4)
+    calendar_button(task_actions, '+ Công việc', lambda: forms.mo_form_cong_viec(
         planned_date=None if state.calendar_mode.get() == 'Chưa xếp lịch' else state.selected_day,
-    )).pack(side='right')
-    calendar_button(filters, 'Xong', lambda: actions.danh_dau_hoan_thanh(state.day_task_list)).pack(side='right')
-    calendar_button(filters, 'Sửa', lambda: actions.sua_viec_da_chon(state.day_task_list)).pack(side='right')
+    ), True).pack(side='left')
     state.day_title = tk.StringVar(state.window)
     state.day_summary = tk.StringVar(state.window)
-    widgets.make_label(detail, textvariable=state.day_title, size=10, bold=True).pack(anchor='w', padx=10)
-    state.day_task_list = widgets.tao_bang(detail, (
-        ('name', 'Việc cần làm', 260), ('project', 'Mục tiêu', 170),
-        ('due', 'Hạn hoàn thành', 110), ('status', 'Trạng thái', 110),
-    ), height=4, expand=True)
-    style = ttk.Style(state.window)
-    style.configure('Calendar.Treeview', rowheight=26, font=('Segoe UI', 9))
-    style.configure('Calendar.Treeview.Heading', font=('Segoe UI', 9), padding=(5, 4))
-    state.day_task_list.configure(style='Calendar.Treeview')
+    heading = tk.Frame(detail, bg=WHITE)
+    state.calendar_list_heading = heading
+    heading.pack(fill='x', padx=14, pady=(1, 6))
+    count = widgets.make_label(heading, textvariable=state.day_summary, size=9, color=BLUE,
+                               bg=LIGHT_BLUE, padx=8, pady=2)
+    count.pack(side='right', padx=(12, 0))
+    state.calendar_count_label = count
+    title = widgets.make_label(heading, textvariable=state.day_title, size=9, bold=True)
+    title.pack(side='left', fill='x', expand=True)
+    heading.bind('<Configure>', lambda event: title.configure(wraplength=max(120, event.width - count.winfo_reqwidth() - 20)))
+    table_area = tk.Frame(detail, bg=WHITE)
+    state.calendar_table_area = table_area
+    table_area.pack(fill='both', expand=True, padx=8, pady=(0, 6))
+    state.day_task_list = widgets.tao_bang(table_area, (
+        ('project', 'Mục tiêu', 160), ('due', 'Hạn hoàn thành', 116), ('status', 'Trạng thái', 112),
+    ), height=4, expand=True, style='Calendar.Treeview', auto_scroll=True)
     state.day_task_list.configure(show='tree headings')
-    state.day_task_list.heading('#0', text='Nhóm')
-    state.day_task_list.column('#0', width=130, minwidth=100, stretch=False)
+    state.day_task_list.heading('#0', text='Việc cần làm', anchor='w')
+    state.day_task_list.column('#0', width=300, minwidth=190, stretch=True)
+    for column in ('project', 'due', 'status'):
+        state.day_task_list.column(column, stretch=False)
+    state.day_task_list.tag_configure('calendar_group', background='#F0F4FA', foreground='#64758C',
+                                      font=('Segoe UI Semibold', 9))
+    state.day_task_list.tag_configure('calendar_even', background=WHITE)
+    state.day_task_list.tag_configure('calendar_odd', background='#FAFBFD')
+    state.day_task_list.tag_configure('calendar_done', foreground=MUTED)
+    state.calendar_empty_label = widgets.make_label(state.day_task_list,
+        'Không có công việc trong phạm vi này.', size=10, color=MUTED)
     state.day_task_list.bind('<Double-1>', sua_viec_trong_bang)
     state.day_task_list.bind('<Return>', sua_viec_trong_bang)
     state.calendar_panes.bind('<Configure>', doi_kich_thuoc_lich)
     ve_cac_ngay()
 
 
+def cap_nhat_nut_che_do(*args):
+    for name, button in state.calendar_mode_buttons.items():
+        button.configure(selected=name == state.calendar_mode.get())
+
+
+def chon_che_do(mode):
+    state.calendar_mode.set(mode)
+    chon_ngay(state.selected_day)
+
+
 def doi_kich_thuoc_lich(event):
+    compact = event.height < 500
+    if state.calendar_compact != compact:
+        state.calendar_compact = compact
+        style = ttk.Style(state.window)
+        style.configure('Calendar.Treeview', rowheight=26 if compact else 32)
+        style.configure('Calendar.Treeview.Heading', padding=(10, 3 if compact else 7))
+        for button in state.calendar_mode_buttons.values():
+            button.configure(height=24 if compact else 30)
+        for button in state.calendar_task_actions.winfo_children():
+            family = 'Segoe UI Semibold' if button.cget('variant') == 'primary' else 'Segoe UI'
+            button.configure(height=28 if compact else None,
+                             font=(family, 9 if compact else 10))
+        state.calendar_filter_bar.pack_configure(pady=(1, 1) if compact else (5, 3))
+        state.calendar_list_heading.pack_configure(pady=(0, 2) if compact else (1, 6))
+        state.calendar_count_label.configure(pady=0 if compact else 2)
+        state.calendar_table_area.pack_configure(pady=(0, 2) if compact else (0, 6))
     if not state.calendar_split_initialized and event.height > 350:
         state.calendar_panes.sash_place(0, 0, max(MIN_HEATMAP_HEIGHT, int(event.height * 0.58)))
         state.calendar_split_initialized = True
@@ -257,7 +324,7 @@ def cap_nhat_danh_sach():
     tasks = calendar_data.tasks_for_period(
         state.calendar_scope_tasks, day, mode, state.calendar_include_done.get())
     state.day_summary.set(f'{len(tasks)} mục')
-    state.day_title.set(f'{title} · {len(tasks)} mục')
+    state.day_title.set(title)
     tree = state.day_task_list
     selected = tree.selection()
     opened = {group: tree.item(group, 'open') for group in tree.get_children()}
@@ -265,16 +332,24 @@ def cap_nhat_danh_sach():
     groups = {}
     for group, text in (('scheduled', 'Đã xếp lịch'), ('unscheduled', 'Chưa xếp lịch')):
         if any(task['scheduled'] == (group == 'scheduled') for task in tasks):
-            groups[group] = tree.insert('', 'end', iid=group, text=text,
-                                        open=opened.get(group, True))
-    for task in tasks:
+            count = sum(task['scheduled'] == (group == 'scheduled') for task in tasks)
+            groups[group] = tree.insert('', 'end', iid=group, text=f'{text}  ·  {count}',
+                                        tags=('calendar_group',), open=opened.get(group, True))
+    for index, task in enumerate(tasks):
         group = 'scheduled' if task['scheduled'] else 'unscheduled'
-        tree.insert(groups[group], 'end', iid=str(task['id']), tags=(task['status'],), values=(
-            task['title'], task['project_name'],
+        tags = ('calendar_even' if index % 2 == 0 else 'calendar_odd',)
+        if task['status'] == 'Hoàn thành':
+            tags += ('calendar_done',)
+        tree.insert(groups[group], 'end', iid=str(task['id']), text=task['title'], tags=tags, values=(
+            task['project_name'],
             data.display_date(task['end_date']) if task['scheduled'] else 'Chưa xếp lịch', task['status'],
         ))
     if selected and tree.exists(selected[0]):
         tree.selection_set(selected[0])
+    if tasks:
+        state.calendar_empty_label.place_forget()
+    else:
+        state.calendar_empty_label.place(relx=0.5, rely=0.6, anchor='center')
 
 
 def sua_viec_trong_bang(event=None):

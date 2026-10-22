@@ -38,8 +38,7 @@ def build_chart(parent):
     state.stats_chart_goal_combo.bind('<<ComboboxSelected>>', select_goal)
     for text, command in (('›', lambda: change_week(1)),
                           ('Tuần này', current_week), ('‹', lambda: change_week(-1))):
-        button = widgets.make_button(navigation, text, command)
-        button.configure(padx=10, pady=5)
+        button = widgets.make_button(navigation, text, command, compact=True)
         button.pack(side='right', padx=2)
 
     note = widgets.make_label(
@@ -86,7 +85,7 @@ def render_chart():
     axes.bar(days, pending, bottom=done, color=PENDING_COLOR, width=0.6, label='Chưa xong')
     names = ('T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN')
     axes.set_xticks(days, [f"{name}\n{item['day']:%d/%m}" for name, item in zip(names, counts)])
-    axes.set_ylabel('Số task lá', color=TEXT, fontsize=9)
+    axes.set_ylabel('Số tasks', color=TEXT, fontsize=9)
     maximum = max(1, max(item['total'] for item in counts))
     axes.set_ylim(0, maximum * 1.35)
     axes.yaxis.set_major_locator(MaxNLocator(integer=True, min_n_ticks=2))
